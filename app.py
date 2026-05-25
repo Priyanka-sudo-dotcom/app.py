@@ -432,7 +432,7 @@ elif st.session_state.view == "cook":
         st.write(recipe['substitutes'])
         
         st.write("---")
-        st.write("🗣 **Gusteau's Voice guidance Tip:**")
+        st.write("🗣 **Gusteau's Voice guidance Tip:**") 
         st.info("Don't turn your back on hot garlic, it burns in the blink of an eye!")
         
         if st.button("🏆 DISH FINISHED & PLATED!", use_container_width=True):
