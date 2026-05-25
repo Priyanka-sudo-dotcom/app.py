@@ -1,117 +1,161 @@
 import streamlit as st
+import time
 
-# 1. PAGE SETUP
-st.set_page_config(page_title="CookSwipe AI", page_icon="🍳")
+# 1. PAGE CONFIG & LUXURY STYLING
+st.set_page_config(page_title="CookSwipe Ultimate", page_icon="👨‍🍳", layout="centered")
 
-# 2. LUXURY DARK THEME CSS
 st.markdown("""
 <style>
     .stApp { background-color: #000000; color: white; }
     .recipe-card {
         background-color: #1a1a1a;
         padding: 20px;
-        border-radius: 25px;
+        border-radius: 30px;
         border: 1px solid #333;
         text-align: center;
-        margin-top: 10px;
     }
     .tag {
-        background-color: rgba(255, 165, 0, 0.1);
+        background: rgba(255, 165, 0, 0.1);
         color: #FFA500;
-        padding: 5px 12px;
-        border-radius: 15px;
-        font-size: 13px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        border: 1px solid orange;
+        margin: 2px;
         display: inline-block;
-        border: 1px solid rgba(255, 165, 0, 0.3);
-        margin: 5px;
+    }
+    .step-box {
+        background: #262626;
+        padding: 15px;
+        border-left: 5px solid #FF6600;
+        border-radius: 10px;
+        margin-bottom: 10px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. THE RECIPE DATABASE (The Brain)
+# 2. THE MASTER DATABASE
 all_recipes = [
     {
-        "ingredients": ["rice", "egg"],
-        "name": "Golden Egg Fried Rice",
-        "time": "10m", "cal": "350",
-        "img": "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=500",
-        "instructions": "Scramble eggs, mix with cooked rice and soy sauce."
+        "name": "Paneer Tikka Wrap",
+        "ingredients": ["paneer", "bread", "onion"],
+        "spices": ["Garam Masala", "Chilli Powder", "Salt"],
+        "time": 10, "cal": 320, "type": "Veg", "mood": "Chatpata", "diff": "Easy",
+        "img": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500",
+        "steps": ["Slice paneer and sauté with spices.", "Toast the bread.", "Wrap and serve hot."]
     },
     {
-        "ingredients": ["bread", "egg"],
-        "name": "Cheesy Egg Toast",
-        "time": "8m", "cal": "280",
-        "img": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500",
-        "instructions": "Toast bread, add fried egg and a slice of cheese."
-    },
-    {
-        "ingredients": ["milk", "banana"],
-        "name": "Velvet Banana Smoothie",
-        "time": "3m", "cal": "200",
-        "img": "https://images.unsplash.com/photo-1553334820-13d8932c45ee?w=500",
-        "instructions": "Blend banana and milk until smooth."
-    },
-    {
-        "ingredients": ["chicken", "rice"],
-        "name": "Seared Chicken & Rice",
-        "time": "20m", "cal": "450",
+        "name": "Spicy Chicken Rice",
+        "ingredients": ["chicken", "rice", "onion"],
+        "spices": ["Biryani Masala", "Turmeric", "Pepper"],
+        "time": 20, "cal": 450, "type": "Non-Veg", "mood": "Healthy", "diff": "Medium",
         "img": "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=500",
-        "instructions": "Pan-fry chicken and serve over fluffy steamed rice."
+        "steps": ["Cook chicken with spices until tender.", "Boil rice separately.", "Mix together and steam for 2 mins."]
+    },
+    {
+        "name": "Cheesy Egg Bread",
+        "ingredients": ["egg", "bread"],
+        "spices": ["Oregano", "Chilli Flakes"],
+        "time": 5, "cal": 280, "type": "Non-Veg", "mood": "Lazy", "diff": "Easy",
+        "img": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500",
+        "steps": ["Toast bread on one side.", "Crack egg on top and cover with lid.", "Add cheese and spices."]
     }
 ]
 
-# 4. APP INTERFACE
-st.title("CookSwipe AI 🍳")
-st.write("### 👨‍🍳 What's in your fridge?")
+# 3. SESSION STATE (The App's Memory)
+if 'view' not in st.session_state: st.session_state.view = "swipe"
+if 'idx' not in st.session_state: st.session_state.idx = 0
+if 'calories_today' not in st.session_state: st.session_state.calories_today = 0
 
-# Ingredient Selection
-user_ingredients = st.multiselect(
-    "Select ingredients you have:",
-    ["rice", "egg", "bread", "milk", "banana", "chicken", "onion"],
-    default=["rice", "egg"]
-)
+# 4. HEADER & FILTERS
+st.title("CookSwipe Ultimate 🍳")
 
-# 5. FILTERING LOGIC (Find matches)
-found_recipes = []
-for r in all_recipes:
-    # Check if all required ingredients for the recipe are in the user's list
-    if all(item in user_ingredients for item in r['ingredients']):
-        found_recipes.append(r)
+# Progress Bar for Health Goal
+st.write(f"🔥 Daily Calories: {st.session_state.calories_today} / 2000 kcal")
+st.progress(min(st.session_state.calories_today / 2000, 1.0))
 
-# 6. DISPLAY RESULTS AS SWIPE CARDS
-if found_recipes:
-    if 'swipe_idx' not in st.session_state:
-        st.session_state.swipe_idx = 0
-    
-    # Handle the index in case user changes ingredients
-    current_idx = st.session_state.swipe_idx % len(found_recipes)
-    recipe = found_recipes[current_idx]
+col_a, col_b = st.columns(2)
+with col_a:
+    ing_search = st.multiselect("What's in the fridge?", ["rice", "egg", "paneer", "chicken", "bread", "onion", "milk"], default=["egg", "bread"])
+with col_b:
+    mood_filter = st.selectbox("Current Mood?", ["All", "Chatpata", "Healthy", "Lazy"])
 
-    # Show the card
-    st.image(recipe['img'], use_container_width=True)
-    st.markdown(f"""
-    <div class="recipe-card">
-        <div class="tag">⏱ {recipe['time']}</div>
-        <div class="tag">🔥 {recipe['cal']} kcal</div>
-        <h2 style="color:white; margin-bottom:10px;">{recipe['name']}</h2>
-        <p style="color:#bbb; font-style:italic;">{recipe['instructions']}</p>
-    </div>
-    """, unsafe_allow_html=True)
+# Filter Logic
+found = [r for r in all_recipes if any(i in ing_search for i in r['ingredients'])]
+if mood_filter != "All":
+    found = [r for r in found if r['mood'] == mood_filter]
 
-    # Swipe Buttons
-    st.write("")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        if st.button("❌ Next", use_container_width=True):
-            st.session_state.swipe_idx += 1
-            st.rerun()
-    with c2:
-        if st.button("🍳 Cook", type="primary", use_container_width=True):
-            st.balloons()
-    with c3:
-        if st.button("❤️ Save", use_container_width=True):
-            st.toast(f"Saved {recipe['name']}!")
-            st.session_state.swipe_idx += 1
-            st.rerun()
+# 5. UI LOGIC
+if not found:
+    st.warning("No recipes match your ingredients/mood. Try selecting more!")
 else:
-    st.warning("👨‍🍳 No recipes found for those ingredients. Try adding more items!")
+    recipe = found[st.session_state.idx % len(found)]
+
+    if st.session_state.view == "swipe":
+        # --- SWIPE VIEW ---
+        st.image(recipe['img'], use_container_width=True)
+        
+        # Calculate Match %
+        match_pc = int((len(set(ing_search) & set(recipe['ingredients'])) / len(recipe['ingredients'])) * 100)
+        
+        st.markdown(f"""
+        <div class="recipe-card">
+            <span class="tag">{recipe['type']}</span>
+            <span class="tag">{recipe['mood']}</span>
+            <span class="tag">💪 {recipe['diff']}</span>
+            <h2>{recipe['name']}</h2>
+            <p>⏱ {recipe['time']} mins | 🔥 {recipe['cal']} kcal | 🎯 {match_pc}% Match</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            if st.button("❌ Next"): 
+                st.session_state.idx += 1
+                st.rerun()
+        with c2:
+            if st.button("🍳 Cook Now", type="primary"): 
+                st.session_state.view = "cook"
+                st.rerun()
+        with c3:
+            if st.button("❤️ Save"): 
+                st.toast("Saved to Favorites!")
+
+    elif st.session_state.view == "cook":
+        # --- COOKING MODE ---
+        if st.button("⬅️ Back"):
+            st.session_state.view = "swipe"
+            st.rerun()
+            
+        st.header(f"Cooking {recipe['name']}")
+        
+        # Substitutes Feature
+        if st.button("🔄 Missing something?"):
+            st.info("💡 No Paneer? Use Tofu. No Bread? Use a Roti/Tortilla.")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("🛒 Ingredients")
+            for i in recipe['ingredients']: st.write(f"- {i}")
+        with col2:
+            st.subheader("🌶️ Spices")
+            for s in recipe['spices']: st.write(f"- {s}")
+
+        st.write("---")
+        # Step-by-Step with Timer
+        st.subheader("📖 Steps")
+        for step in recipe['steps']:
+            st.markdown(f"<div class='step-box'>{step}</div>", unsafe_allow_html=True)
+            
+        if st.button("⏱ Start 1-Min Prep Timer"):
+            ph = st.empty()
+            for secs in range(60, 0, -1):
+                ph.metric("Timer", f"{secs}s")
+                time.sleep(1)
+            st.success("Timer Done!")
+
+        if st.button("✅ Finished Cooking!"):
+            st.balloons()
+            st.session_state.calories_today += recipe['cal']
+            st.session_state.view = "swipe"
+            st.rerun()
