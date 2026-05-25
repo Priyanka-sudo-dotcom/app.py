@@ -3,7 +3,7 @@ import streamlit as st
 # 1. BASIC SETTINGS
 st.set_page_config(page_title="CookSwipe AI", page_icon="🍳")
 
-# 2. THE DESIGN (CSS) - Simplified to avoid errors
+# 2. THE DESIGN (CSS) - Fixed the spelling error here!
 st.markdown("""
 <style>
     .stApp {
@@ -26,12 +26,11 @@ st.markdown("""
         display: inline-block;
     }
 </style>
-""", unsafe_allowed_html=True)
+""", unsafe_allow_html=True)
 
 # 3. THE CONTENT
 st.title("CookSwipe 🍳")
 
-# Simple data
 recipes = [
     {"name": "Paneer Tikka Wrap", "time": "10m", "cal": "320", "img": "https://images.unsplash.com/photo-1544025162-d76694265947?w=400"},
     {"name": "Cheesy Egg Toast", "time": "8m", "cal": "280", "img": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400"}
@@ -40,10 +39,9 @@ recipes = [
 if 'count' not in st.session_state:
     st.session_state.count = 0
 
-# Pick the current recipe
 item = recipes[st.session_state.count % len(recipes)]
 
-# 4. SHOW THE CARD
+# 4. SHOW THE CARD - Fixed spelling here too!
 st.image(item['img'], use_container_width=True)
 st.markdown(f"""
 <div class="recipe-card">
@@ -51,7 +49,7 @@ st.markdown(f"""
     <div class="tag">🔥 {item['cal']} kcal</div>
     <h2 style="color:white;">{item['name']}</h2>
 </div>
-""", unsafe_allowed_html=True)
+""", unsafe_allow_html=True)
 
 # 5. BUTTONS
 st.write("")
