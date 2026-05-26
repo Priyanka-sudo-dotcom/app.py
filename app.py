@@ -3,60 +3,52 @@ import json
 import google.generativeai as genai
 
 # --- 1. CONFIGURATION ---
-st.set_page_config(page_title="CookSwipe Elite", layout="wide")
+st.set_page_config(page_title="CookSwipe Evolution", layout="wide")
 
-# Custom CSS to ensure elements are visible and themed correctly
-st.markdown("""
-<style>
-    .glass-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 30px; padding: 40px; color: white; }
-    .stat-pill { background: rgba(255, 107, 0, 0.2); color: #FF6B00; padding: 8px 16px; border-radius: 50px; font-weight: bold; margin-right: 10px; }
-    .main-title { font-size: 50px; font-weight: 800; color: white; }
-</style>
-""", unsafe_allow_html=True)
-
-# --- 2. SESSION STATE ---
-if 'recipe' not in st.session_state: st.session_state.recipe = None
-
-# --- 3. ENGINE ---
-def call_evolution_ai(prompt):
+# --- 2. THE STABLE ENGINE ---
+def get_recipe_from_ai(ingredients, style, mood):
     api_key = st.secrets.get("GEMINI_API_KEY")
-    if not api_key: return {"error": "API Key missing."}
+    if not api_key: return None
     
     genai.configure(api_key=api_key)
+    # Using gemini-1.0-pro as it is the most stable and widely supported model
+    model = genai.GenerativeModel('gemini-1.0-pro')
+    
+    prompt = f"""
+    Act as a professional chef. Create a {style} style {mood} recipe using these ingredients: {ingredients}.
+    Return the response in JSON format only with these keys: 
+    "name", "time", "calories", "spices", "steps", "fact".
+    """
+    
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content(prompt)
         text = response.text.replace("```json", "").replace("```", "").strip()
         return json.loads(text)
     except Exception as e:
-        return {"error": str(e)}
+        st.error(f"AI Engine Error: {e}")
+        return None
 
-# --- 4. INTERFACE ---
-st.markdown("<h1 class='main-title'>CookSwipe <span style='color:#FF6B00;'>Elite</span></h1>", unsafe_allow_html=True)
-col_in, col_out = st.columns([1, 1.8], gap="large")
+# --- 3. UI ---
+st.title("🥘 CookSwipe Evolution")
 
-with col_in:
-    ingredients = st.text_area("📥 Kitchen Inventory", "Egg, Bread, Cheese", height=100)
-    if st.button("✨ GENERATE MASTERPIECE"):
-        with st.spinner("AI is evolving..."):
-            prompt = f"Create a recipe using: {ingredients}. Return ONLY JSON: {{'name': 'Name', 'time': '20m', 'calories': '300', 'spices': ['s1'], 'steps': ['step1'], 'fact': 'tip'}}"
-            res = call_evolution_ai(prompt)
-            if 'error' not in res:
-                st.session_state.recipe = res
-                st.rerun()
-            else:
-                st.error(f"Error: {res['error']}")
+ingredients = st.text_input("Ingredients", "Egg, Bread, Cheese")
+style = st.selectbox("Style", ["Desi", "Continental", "Asian Fusion"])
+mood = st.selectbox("Mood", ["Healthy", "Lazy", "Fine Dining"])
 
-with col_out:
-    if st.session_state.recipe:
-        res = st.session_state.recipe
-        st.markdown(f"""
-        <div class="glass-card">
-            <h1>{res['name']}</h1>
-            <p>⏱ {res['time']} | 🥗 {res['calories']} kcal</p>
-            <h3>Technique</h3>
-            {''.join([f'<p><b>{i+1}.</b> {s}</p>' for i, s in enumerate(res['steps'])])}
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.info("Add ingredients and click generate to start.")
+if st.button("✨ GENERATE RECIPE"):
+    with st.spinner("Chef is cooking..."):
+        recipe = get_recipe_from_ai(ingredients, style, mood)
+        if recipe:
+            st.session_state.recipe = recipe
+        else:
+            st.warning("Failed to generate. Please check your API key.")
+
+if 'recipe' in st.session_state and st.session_state.recipe:
+    r = st.session_state.recipe
+    st.subheader(r['name'])
+    st.write(f"⏱ {r['time']} | 🥗 {r['calories']} kcal")
+    st.write(f"**Spices:** {', '.join(r['spices'])}")
+    st.write("**Instructions:**")
+    for i, step in enumerate(r['steps']):
+        st.write(f"{i+1}. {step}")
+    st.info(f"💡 Tip: {r['fact']}")
