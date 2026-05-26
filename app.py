@@ -25,7 +25,8 @@ def call_evolution_ai(prompt):
         api_key = st.secrets.get("GEMINI_API_KEY")
         if not api_key: return "ERROR: No API Key found."
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        # Using the standard latest flash model identifier
+        model = genai.GenerativeModel("gemini-1.5-flash-latest")
         
         response = model.generate_content(prompt)
         text = response.text.replace("```json", "").replace("```", "").strip()
