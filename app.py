@@ -83,7 +83,7 @@ st.markdown("""
 # --- 2. FAILSAFE COMPREHENSIVE LOCAL DATABASE ---
 LOCAL_RECIPES = [
     {
-        "name": "Artisanal Pan-Seeared Shahi Paneer",
+        "name": "Artisanal Pan-Seared Shahi Paneer",
         "time": "12 mins",
         "calories": 340,
         "type": "Veg",
@@ -189,7 +189,6 @@ def load_lottie_url(url):
         pass
     return None
 
-# Cleaned up raw URL connection (Removed syntax wrapper error)
 lottie_cooking = load_lottie_url("[https://assets10.lottiefiles.com/packages/lf20_m6cuL6.json](https://assets10.lottiefiles.com/packages/lf20_m6cuL6.json)")
 
 # --- 6. UNBREAKABLE CLIENT-SIDE GRAPHICS (HTML/SVG ENGINE) ---
@@ -435,4 +434,6 @@ elif st.session_state.view == "swipe":
         if st.button("🔙 Back to Fridge", use_container_width=True):
             st.session_state.view = "fridge"
             st.rerun()
-        st.markdo
+        st.markdown("</div>", unsafe_allow_html=True)
+
+elif st.session_state.view
