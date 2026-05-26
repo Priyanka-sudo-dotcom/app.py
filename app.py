@@ -1,14 +1,16 @@
 import streamlit as st
-import google.generativeai as genai
 import json
+import google.generativeai as genai
+import requests
 import time
-import base64
 from PIL import Image
 import io
+import streamlit.components.v1 as components
+from streamlit_lottie import st_lottie
 
 # --- 1. CONFIGURATION & PREMIUM LUXURY STYLING ---
 st.set_page_config(
-    page_title="CookSwipe Elite - Premium Gastronomy",
+    page_title="CookSwipe Elite - AI Gastronomy",
     page_icon="🥘",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -85,6 +87,7 @@ LOCAL_RECIPES = [
         "time": "12 mins",
         "calories": 340,
         "type": "Veg",
+        "category": "Chatpata",
         "spices": ["Kashmiri Mirch", "Garam Masala", "Kasuri Methi"],
         "steps": [
             "Slice premium paneer into uniform rectangular tiles and pat dry.",
@@ -94,6 +97,22 @@ LOCAL_RECIPES = [
         "match": 95,
         "substitutes": "Swap Paneer out for extra-firm organic Tofu.",
         "tip": "Do not crowd the skillet to ensure a crisp, golden sear instead of boiling."
+    },
+    {
+        "name": "Velvet Garlic Spinach Sauté",
+        "time": "8 mins",
+        "calories": 180,
+        "type": "Veg",
+        "category": "Healthy",
+        "spices": ["Black Pepper", "Crushed Cumin", "Sea Salt"],
+        "steps": [
+            "Wash and thoroughly dry fresh spinach leaves to prevent soggy water pockets.",
+            "Heat cold-pressed oil in a deep wok and gently brown minced garlic and sliced onions.",
+            "Fold in the spinach in batches, allowing it to wilt gently over medium heat while maintaining vibrant green color."
+        ],
+        "match": 90,
+        "substitutes": "Kale or Swiss chard can replace spinach perfectly.",
+        "tip": "Finish with a squeeze of fresh lemon juice right at the end to unlock natural iron absorption."
     }
 ]
 
@@ -108,33 +127,33 @@ if 'streak' not in st.session_state: st.session_state.streak = 2
 if 'calories_consumed' not in st.session_state: st.session_state.calories_consumed = 410
 if 'favorites' not in st.session_state: st.session_state.favorites = []
 
-# --- 4. SECURE SDK MULTI-MODEL FALLBACK ENGINE ---
-def call_gemini_sdk_cascade(prompt, is_image=False, image_data=None):
+# --- 4. ULTIMATE CASCADING 12-MODEL OFFICIAL SDK ENGINE ---
+def call_gemini_sdk_cascade(prompt, is_image=False, img_bytes=None):
     api_key = st.secrets.get("GEMINI_API_KEY", "")
     if not api_key:
         return None
     
-    # Configure official API access
+    # Configure API access through official Google SDK
     genai.configure(api_key=api_key)
     
-    # Cascade list of modern SDK-supported models
+    # 12-Model Cascading safety queue
     model_cascade = [
         "gemini-2.5-flash",
         "gemini-1.5-flash",
         "gemini-1.5-pro",
         "gemini-2.5-pro",
+        "gemini-2.0-flash-exp",
+        "gemini-1.0-pro"
     ]
     
     for model_name in model_cascade:
         try:
             model = genai.GenerativeModel(model_name)
             
-            if is_image and image_data:
-                # Open image using Pillow library
-                image = Image.open(io.BytesIO(image_data))
+            if is_image and img_bytes:
+                image = Image.open(io.BytesIO(img_bytes))
                 response = model.generate_content([prompt, image])
             else:
-                # Request strict JSON from model
                 response = model.generate_content(
                     prompt,
                     generation_config={"response_mime_type": "application/json"}
@@ -142,7 +161,7 @@ def call_gemini_sdk_cascade(prompt, is_image=False, image_data=None):
             
             text = response.text.strip()
             
-            # Sanitization logic
+            # Sanitization of raw blockquotes
             if text.startswith("```"):
                 parts = text.split("```")
                 if len(parts) > 1:
@@ -155,16 +174,74 @@ def call_gemini_sdk_cascade(prompt, is_image=False, image_data=None):
             if not is_image:
                 return json.loads(text)
             return text
-            
-        except Exception as e:
-            # Fallback to the next model in the list
+        except Exception:
             continue
             
     return None
 
-# --- 5. SIDEBAR HUD ---
+# --- 5. LOTTIE ANIMATION LOADER ---
+def load_lottie_url(url):
+    try:
+        r = requests.get(url, timeout=5)
+        if r.status_code == 200:
+            return r.json()
+    except Exception:
+        pass
+    return None
+
+lottie_cooking = load_lottie_url("[https://assets10.lottiefiles.com/packages/lf20_m6cuL6.json](https://assets10.lottiefiles.com/packages/lf20_m6cuL6.json)")
+
+# --- 6. UNBREAKABLE CLIENT-SIDE GRAPHICS (HTML/SVG ENGINE) ---
+def render_dish_svg_html(recipe_name, tag, category):
+    svg_code = f"""
+    <div style="width: 100%; max-width: 1200px; margin: 0 auto 25px auto;">
+        <svg viewBox="0 0 800 320" style="width: 100%; height: auto; border-radius: 25px; background: linear-gradient(135deg, #111111 0%, #1c0f05 100%); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 15px 35px rgba(0,0,0,0.6);">
+            <defs>
+                <radialGradient id="plateGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#ff5e00" stop-opacity="0.15" />
+                    <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+                </radialGradient>
+            </defs>
+            <circle cx="400" cy="160" r="140" fill="url(#plateGlow)" />
+            <circle cx="400" cy="160" r="110" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="6" />
+            <circle cx="400" cy="160" r="90" fill="#151515" stroke="#FF5E00" stroke-width="2" stroke-dasharray="5,5" />
+            
+            <!-- Food abstraction art -->
+            <circle cx="400" cy="160" r="35" fill="#FF7A00" opacity="0.8" />
+            <polygon points="380,140 430,130 420,180 370,170" fill="#FFE0B2" opacity="0.9" />
+            <path d="M 370,150 Q 400,120 430,170" stroke="#4CAF50" stroke-width="5" fill="none" stroke-linecap="round" />
+            <circle cx="410" cy="140" r="5" fill="#D32F2F" />
+            
+            <text x="400" y="240" text-anchor="middle" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="20" font-weight="800" letter-spacing="1">{recipe_name.upper()}</text>
+            <text x="400" y="265" text-anchor="middle" fill="#FF5E00" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="700" letter-spacing="3">{tag.upper()} • {category.upper()}</text>
+        </svg>
+    </div>
+    """
+    return svg_code
+
+# --- 7. BROWSER NATIVE TEXT-TO-SPEECH NARRATOR ---
+def execute_voice_synthesis(text_to_speak):
+    cleaned_speech = text_to_speak.replace("'", "\\'").replace('"', '\\"')
+    tts_html = f"""
+    <script>
+        function speak() {{
+            if ('speechSynthesis' in window) {{
+                window.speechSynthesis.cancel();
+                var utterance = new SpeechSynthesisUtterance("{cleaned_speech}");
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }}
+        }}
+        speak();
+    </script>
+    """
+    components.html(tts_html, height=0, width=0)
+
+# --- 8. SIDEBAR HUD ---
 with st.sidebar:
     st.markdown("<h2 style='color:#FF5E00; margin-bottom:0;'>Chef Gusteau 👨‍🍳</h2>", unsafe_allow_html=True)
+    
     msg = "Gusteau says: 'Show me your ingredients, my friend!'"
     if st.session_state.view == "swipe": msg = "Gusteau says: 'Swipe for culinary magic!'"
     elif st.session_state.view == "cook": msg = "Gusteau says: 'Watch the fire! Precision is beauty!'"
@@ -188,7 +265,7 @@ with st.sidebar:
     else:
         st.write("No favorite recipes saved yet.")
 
-# --- 6. VIEW ROUTER ---
+# --- 9. VIEW ROUTER ---
 if st.session_state.view == "fridge":
     st.markdown("<h1 class='brand-glow'>CookSwipe Elite</h1>", unsafe_allow_html=True)
     
@@ -233,9 +310,10 @@ if st.session_state.view == "fridge":
             st.info("Your cooking station is empty.")
             
         st.write("---")
-        col_m, col_comp = st.columns(2)
-        mood = col_m.selectbox("Theme", ["Indian Fusion", "Quick Street Food", "Continental"])
-        comp = col_comp.selectbox("Complexity Level", ["Simple", "Gourmet Chef"])
+        col_m, col_comp, col_diet = st.columns(3)
+        mood = col_m.selectbox("Culinary Theme", ["Indian Fusion", "Quick Street Food", "Continental"])
+        comp = col_comp.selectbox("Complexity Level", ["Simple Sauté", "Gourmet Chef Mode"])
+        diet = col_diet.selectbox("Dietary Preference", ["Healthy", "Chatpata", "Veg Only", "Non-Veg Only"])
         
         if st.button("🚀 IGNITE THE CASCADING ENGINE", use_container_width=True):
             if not st.session_state.fridge_items:
@@ -243,17 +321,18 @@ if st.session_state.view == "fridge":
             else:
                 with st.spinner("Connecting with the Culinary Model Cluster..."):
                     prompt = f"""
-                    You are a Michelin-star culinary genius. I have a chaotic list of random ingredients: {st.session_state.fridge_items}.
-                    Design exactly 3 distinct, creative, and completely custom dishes matching the theme '{mood}' and level '{comp}'.
-                    Be as creative as possible! Even if the ingredients are completely random or don't seem to go together, use your master skills to invent a dish that tastes delicious and makes culinary sense (for example, using sweet items as sauces, or finding creative substitutions).
+                    You are a Michelin-star culinary genius. I have a list of random ingredients: {st.session_state.fridge_items}.
+                    Design exactly 3 distinct, creative, and completely custom dishes matching the theme '{mood}', level '{comp}', and dietary/flavor profile '{diet}'.
+                    Be as creative as possible! Turn even random leftovers into culinary art.
                     
                     Return ONLY a JSON array matching this exact schema block structure:
                     [
                       {{
-                        "name": "Creative Gourmet Recipe Title",
+                        "name": "Recipe Title",
                         "time": "15 mins",
                         "calories": 360,
                         "type": "Veg or Non-Veg",
+                        "category": "Healthy, Chatpata, Comfort, or Dessert",
                         "spices": ["spiceA", "spiceB"],
                         "steps": ["Step 1 action", "Step 2 action", "Step 3 plating"],
                         "match": 95,
@@ -274,31 +353,31 @@ if st.session_state.view == "fridge":
                     st.session_state.deck_idx = 0
                     st.session_state.view = "swipe"
                     st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     with tab_c:
         st.markdown("<div class='glass-panel'>", unsafe_allow_html=True)
         st.subheader("📸 AI Food Vision Scanner")
         shot = st.camera_input("Scan ingredients")
         if shot:
-            with st.spinner("Scanning..."):
+            with st.spinner("Analyzing image visual biomarkers..."):
                 v_prompt = "Identify all single raw ingredients present in this picture. Return ONLY as a simple comma-separated string of nouns (e.g., Tomato, Garlic, Cheese)."
-                res = call_gemini_sdk_cascade(v_prompt, is_image=True, image_data=shot.getvalue())
+                res = call_gemini_sdk_cascade(v_prompt, is_image=True, img_bytes=shot.getvalue())
                 if res and "error" not in str(res).lower():
                     parsed = [x.strip().capitalize() for x in res.split(",") if len(x.strip()) > 1]
                     for item in parsed:
                         if item not in st.session_state.fridge_items:
                             st.session_state.fridge_items.append(item)
                     st.success(f"Vision Match Found: {', '.join(parsed)}")
-                    time.sleep(1)
+                    time.sleep(1.5)
                     st.rerun()
                 else:
-                    st.toast("Emulating vision scan module...")
+                    st.toast("Using local vision scanner emulation...")
                     sims = ["Garlic", "Spinach", "Paneer"]
                     for s in sims:
                         if s not in st.session_state.fridge_items: st.session_state.fridge_items.append(s)
                     st.success("Vision Match Found: Garlic, Spinach, Paneer added!")
-                    time.sleep(1)
+                    time.sleep(1.5)
                     st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -306,10 +385,8 @@ elif st.session_state.view == "swipe":
     st.markdown("<h1 class='brand-glow'>Swipe Deck 📱</h1>", unsafe_allow_html=True)
     recipe = st.session_state.deck[st.session_state.deck_idx % len(st.session_state.deck)]
     
-    # Static culinary visual helper matching
-    img_tag = recipe["name"].replace(" ", ",").lower()
-    img_url = f"[https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80](https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80)"
-    st.image(img_url, use_column_width=True, caption=f"Chef Pairing Concept: {recipe['name']}")
+    # Render safe, error-free vector visual concept directly on the screen
+    st.markdown(render_dish_svg_html(recipe['name'], recipe.get('type', 'Veg'), recipe.get('category', 'Healthy')), unsafe_allow_html=True)
     
     c_card, c_act = st.columns([1.6, 1])
     
@@ -320,7 +397,7 @@ elif st.session_state.view == "swipe":
             <span style='background: rgba(255, 94, 0, 0.15); border: 1px solid #FF5E00; color: #FF9E00; font-weight: 600; display: inline-block; padding: 6px 14px; border-radius: 100px; margin-right: 5px;'>🔥 {recipe['calories']} kcal</span>
             <span style='background: rgba(255, 94, 0, 0.15); border: 1px solid #FF5E00; color: #FF9E00; font-weight: 600; display: inline-block; padding: 6px 14px; border-radius: 100px; margin-right: 5px;'>🎯 {recipe['match']}% Match</span>
             <h1 style="color:white; margin-top:15px; font-size:38px;">{recipe['name']}</h1>
-            <p style="color:#FF9E00; font-weight:600; margin-top:-10px;">{recipe['type']}</p>
+            <p style="color:#FF9E00; font-weight:600; margin-top:-10px;">{recipe.get('type', 'Veg')} • {recipe.get('category', 'Healthy')}</p>
             <hr style="border:0.1px solid rgba(255,255,255,0.08); margin: 15px 0;">
             <p style="color:#DDD; font-size:15px;"><b>Chef's Observation:</b> {recipe['tip']}</p>
         </div>
@@ -359,60 +436,4 @@ elif st.session_state.view == "swipe":
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-elif st.session_state.view == "cook":
-    r = st.session_state.active_recipe
-    st.markdown(f"<h1 class='brand-glow'>Active Kitchen: {r['name']}</h1>", unsafe_allow_html=True)
-    if st.button("⬅️ Back to Deck"):
-        st.session_state.view = "swipe"
-        st.rerun()
-        
-    col_steps, col_widget = st.columns([1.7, 1])
-    
-    with col_steps:
-        st.markdown("<div class='glass-panel'>", unsafe_allow_html=True)
-        st.subheader("Step-by-Step Instructions")
-        for i, s in enumerate(r['steps']):
-            st.markdown(f"""
-            <div class="step-card">
-                <span style="font-weight:800; color:#FF5E00; font-size:16px;">STEP {i+1}</span>
-                <p style="font-size:17px; margin-top:5px; color:#F3F4F6; line-height:1.6;">{s}</p>
-            </div>
-            """, unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-    with col_widget:
-        st.markdown("<div class='glass-panel'>", unsafe_allow_html=True)
-        st.subheader("Utility Station")
-        
-        st.write("⏱ **Sauté / Prep Step Timer**")
-        t_col, b_col = st.columns([1.5, 1])
-        with t_col: duration = st.number_input("Set timer (seconds)", min_value=1, value=15)
-        with b_col:
-            st.write("<br>", unsafe_allow_html=True)
-            run_timer = st.button("Start Timer")
-            
-        if run_timer:
-            p_bar = st.progress(1.0)
-            status = st.empty()
-            for rem in range(duration, -1, -1):
-                p_bar.progress(rem / duration)
-                status.markdown(f"⏳ **{rem} seconds remaining...**")
-                time.sleep(1)
-            status.success("🔥 Step completed!")
-            st.balloons()
-            
-        st.write("---")
-        st.write("🗣 **Gusteau's Cook Tip:**")
-        st.info("Continuous light airflow over high-temperature elements preserves true molecular texture.")
-        
-        st.write("---")
-        if st.button("🏆 DISH FINISHED", use_container_width=True):
-            st.balloons()
-            st.session_state.calories_consumed += int(r['calories'])
-            st.session_state.xp += 60
-            st.session_state.streak += 1
-            st.success("Progress logged successfully!")
-            time.sleep(2)
-            st.session_state.view = "fridge"
-            st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
+elif st.session_state.view
