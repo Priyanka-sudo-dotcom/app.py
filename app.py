@@ -1,14 +1,3 @@
-import google.generativeai as genai
-import streamlit as st
-
-# Test the connection
-try:
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    models = genai.list_models()
-    for m in models:
-        st.write(f"Available model: {m.name}")
-except Exception as e:
-    st.error(f"Connection Test Failed: {e}")
 import streamlit as st
 import json
 import google.generativeai as genai
@@ -16,7 +5,7 @@ import google.generativeai as genai
 # --- 1. CONFIGURATION ---
 st.set_page_config(page_title="CookSwipe Evolution", layout="wide")
 
-# --- 2. THE STABLE ENGINE ---
+# --- 2. THE ENGINE ---
 def get_recipe_from_ai(ingredients, style, mood):
     api_key = st.secrets.get("GEMINI_API_KEY")
     if not api_key:
@@ -25,17 +14,18 @@ def get_recipe_from_ai(ingredients, style, mood):
     
     try:
         genai.configure(api_key=api_key)
-        # Using the standard gemini-1.5-flash model
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Using the exact model name from your available list
+        model = genai.GenerativeModel('models/gemini-3.5-flash')
         
         prompt = f"""
         Act as a professional chef. Create a {style} style {mood} recipe using these ingredients: {ingredients}.
-        Return the response in JSON format ONLY. Do not include any other text.
+        Return the response in JSON format ONLY. 
         Structure: {{"name": "...", "time": "...", "calories": "...", "spices": ["..."], "steps": ["..."], "fact": "..."}}
         """
         
         response = model.generate_content(prompt)
-        # Clean potential markdown wrappers
+        # Clean response
         text = response.text.replace("```json", "").replace("```", "").strip()
         return json.loads(text)
     except Exception as e:
@@ -54,9 +44,11 @@ if st.button("✨ GENERATE RECIPE"):
         recipe = get_recipe_from_ai(ingredients, style, mood)
         if recipe:
             st.session_state.recipe = recipe
+            st.rerun()
         else:
-            st.warning("Failed to generate. Please check your API key and permissions.")
+            st.warning("Failed to generate.")
 
+# --- 4. DISPLAY ---
 if 'recipe' in st.session_state and st.session_state.recipe:
     r = st.session_state.recipe
     st.subheader(r.get('name', 'Recipe'))
