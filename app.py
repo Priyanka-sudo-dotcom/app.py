@@ -1,76 +1,65 @@
+
 import streamlit as st
 import json
 import google.generativeai as genai
-import requests
 import time
-from PIL import Image
-import io
-import streamlit.components.v1 as components
-from streamlit_lottie import st_lottie
 
-# --- 1. CONFIGURATION & PREMIUM LUXURY STYLING ---
-st.set_page_config(page_title="CookSwipe Elite - AI Gastronomy", page_icon="🥘", layout="wide")
-
+# --- 1. CONFIGURATION ---
+st.set_page_config(page_title="CookSwipe Elite", layout="wide")
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
-    html, body, [data-testid="stAppViewContainer"] { background-color: #030303; font-family: 'Plus Jakarta Sans', sans-serif; color: #F3F4F6; }
     .brand-glow { font-size: 52px; font-weight: 800; background: linear-gradient(135deg, #FF5E00 0%, #FF9E00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .glass-panel { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 25px; padding: 30px; }
-    .stat-pill { background: rgba(255, 94, 0, 0.15); border: 1px solid #FF5E00; color: #FF9E00; padding: 6px 14px; border-radius: 100px; margin: 5px; font-weight: 600; }
+    .glass-panel { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 25px; padding: 30px; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. SESSION STATE ---
-if 'view' not in st.session_state: st.session_state.view = "fridge"
-if 'fridge_items' not in st.session_state: st.session_state.fridge_items = ["Paneer", "Spinach"]
-if 'xp' not in st.session_state: st.session_state.xp = 120
-if 'streak' not in st.session_state: st.session_state.streak = 2
-if 'calories_consumed' not in st.session_state: st.session_state.calories_consumed = 410
-
-# --- 3. SIDEBAR HUD ---
-with st.sidebar:
-    st.markdown("### 🏆 Kitchen Mastery")
-    st.write(f"✨ {st.session_state.xp} XP | 🔥 {st.session_state.streak}-Day Streak")
-    progress_val = min(st.session_state.calories_consumed / 2000, 1.0)
-    st.progress(progress_val)
-    st.write(f"📊 Calories: {st.session_state.calories_consumed} / 2000 kcal")
-
-# --- 4. MAIN INTERFACE ---
-if st.session_state.view == "fridge":
-    st.markdown("<h1 class='brand-glow'>CookSwipe Elite</h1>", unsafe_allow_html=True)
+# --- 2. AI ENGINE ---
+def call_evolution_ai(prompt):
+    api_key = st.secrets.get("GEMINI_API_KEY")
+    if not api_key: return None
+    genai.configure(api_key=api_key)
     
-    # Inventory Management
-    st.write("#### 🛒 Current Inventory")
-    new_item = st.text_input("Add ingredient:")
-    if st.button("Add"): 
-        if new_item:
-            st.session_state.fridge_items.append(new_item)
-            st.rerun()
-    
-    st.write(", ".join(st.session_state.fridge_items))
-    
-    # Theme Selectors
-    col1, col2 = st.columns(2)
-    style = col1.selectbox("Theme", ["Healthy", "Chatpata", "Veg Only"])
-    mood = col2.selectbox("Complexity", ["Simple Sauté", "Gourmet Chef"])
-    
-    if st.button("🚀 IGNITE ENGINE"):
-        st.session_state.view = "swipe"
-        st.rerun()
+    # Cascade through models
+    for model_name in ["gemini-1.5-flash", "gemini-1.5-pro"]:
+        try:
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(prompt)
+            res_text = response.text.replace("```json", "").replace("```", "").strip()
+            return json.loads(res_text)
+        except:
+            continue
+    return None
 
-elif st.session_state.view == "swipe":
-    st.write("## Recipe Deck")
-    if st.button("🍳 Start Cooking"):
-        st.session_state.view = "cook"
-        st.rerun()
+# --- 3. SESSION STATE ---
+if 'recipe' not in st.session_state: st.session_state.recipe = None
 
-elif st.session_state.view == "cook":
-    st.write("## Active Cooking")
-    duration = st.number_input("Timer (s)", value=15)
-    if st.button("Start Timer"):
-        status = st.empty()
-        for rem in range(duration, -1, -1):
-            status.markdown(f"⏳ **{rem} seconds remaining...**")
-            time.sleep(1)
-        status.success("🔥 Step finished!")
+# --- 4. INTERFACE ---
+st.markdown("<h1 class='brand-glow'>CookSwipe Evolution</h1>", unsafe_allow_html=True)
+col1, col2 = st.columns([1, 1.5])
+
+with col1:
+    ingredients = st.text_area("What's in your fridge?", "Paneer, Spinach, Garlic")
+    style = st.selectbox("Style", ["Desi", "Continental", "Asian Fusion"])
+    mood = st.selectbox("Mood", ["Healthy", "Cheat Meal", "Fine Dining"])
+    
+    if st.button("✨ GENERATE RECIPE"):
+        prompt = f"""
+        Create a {style} style {mood} recipe using: {ingredients}.
+        Return ONLY valid JSON:
+        {{ "name": "Recipe Name", "time": "20 mins", "calories": "300", "spices": ["list", "of", "spices"], "steps": ["step 1", "step 2"], "fact": "Chef's tip" }}
+        """
+        with st.spinner("Evolving ingredients..."):
+            st.session_state.recipe = call_evolution_ai(prompt)
+
+with col2:
+    if st.session_state.recipe:
+        res = st.session_state.recipe
+        st.subheader(res['name'])
+        st.write(f"⏱ {res['time']} | 🥗 {res['calories']} kcal")
+        st.write(f"**Spices:** {', '.join(res['spices'])}")
+        st.write("**Instructions:**")
+        for i, step in enumerate(res['steps']):
+            st.write(f"{i+1}. {step}")
+        st.info(f"💡 Chef's Secret: {res['fact']}")
+    else:
+        st.info("Your recipe will appear here once generated.")
