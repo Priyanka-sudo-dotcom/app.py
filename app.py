@@ -113,6 +113,22 @@ LOCAL_RECIPES = [
         "match": 90,
         "substitutes": "Kale or Swiss chard can replace spinach perfectly.",
         "tip": "Finish with a squeeze of fresh lemon juice right at the end to unlock natural iron absorption."
+    },
+    {
+        "name": "Emerald Paneer & Spiced Spinach Stir-Fry",
+        "time": "15 mins",
+        "calories": 310,
+        "type": "Veg",
+        "category": "Healthy",
+        "spices": ["Garam Masala", "Turmeric", "Cumin Seeds"],
+        "steps": [
+            "Blanch the fresh spinach leaves and puree them into a silky smooth base with a touch of green chili.",
+            "Sauté cumin seeds and finely chopped onions in warm oil until sweet and caramelized.",
+            "Stir-fry the paneer cubes lightly, then fold them into the spiced green spinach gravy and simmer for 5 minutes."
+        ],
+        "match": 98,
+        "substitutes": "Substitute Paneer with pressed Tofu cubes or roasted Mushrooms.",
+        "tip": "Adding a splash of cold water to the spinach puree helps preserve its gorgeous vivid emerald color."
     }
 ]
 
@@ -189,11 +205,53 @@ def load_lottie_url(url):
         pass
     return None
 
-# Fixed raw URL format (No markdown wrappers to cause errors)
+# Clean, error-free URL string for cooking loader
 lottie_cooking = load_lottie_url("[https://assets10.lottiefiles.com/packages/lf20_m6cuL6.json](https://assets10.lottiefiles.com/packages/lf20_m6cuL6.json)")
 
 # --- 6. UNBREAKABLE CLIENT-SIDE GRAPHICS (HTML/SVG ENGINE) ---
+# Inspects keywords in the recipe name and dynamically draws a thematic vector illustration
 def render_dish_svg_html(recipe_name, tag, category):
+    name_lower = recipe_name.lower()
+    
+    # Decide on food illustration based on title context
+    if "soup" in name_lower or "stew" in name_lower or "shahi" in name_lower or "gravy" in name_lower:
+        # Drawing a hot steaming bowl of rich soup/gravy
+        food_graphic = """
+        <path d="M 330,140 C 330,195 470,195 470,140 Z" fill="#D84315" stroke="#FF5E00" stroke-width="3" />
+        <path d="M 310,135 L 490,135 L 470,145 L 330,145 Z" fill="#FF8A65" />
+        <path d="M 380,110 Q 390,95 395,110 T 410,110" stroke="rgba(255,255,255,0.4)" stroke-width="4" fill="none" stroke-linecap="round" />
+        <path d="M 400,110 Q 410,95 415,110 T 430,110" stroke="rgba(255,255,255,0.4)" stroke-width="4" fill="none" stroke-linecap="round" />
+        <circle cx="400" cy="155" r="10" fill="#4CAF50" />
+        <circle cx="420" cy="150" r="6" fill="#FFD54F" />
+        """
+    elif "salad" in name_lower or "spinach" in name_lower or "sauté" in name_lower or "fry" in name_lower or "greens" in name_lower:
+        # Drawing layered leaves and stir-fry greens
+        food_graphic = """
+        <path d="M 330,175 Q 400,105 470,175 Z" fill="#2E7D32" opacity="0.8" />
+        <path d="M 350,165 Q 410,125 450,165 Z" fill="#4CAF50" opacity="0.9" />
+        <!-- Tomato and paneer cubes floating -->
+        <rect x="380" y="145" width="22" height="22" rx="4" fill="#FFE0B2" stroke="#FFD54F" stroke-width="1.5" transform="rotate(15, 391, 156)" />
+        <circle cx="430" cy="150" r="12" fill="#E53935" />
+        <circle cx="426" cy="146" r="4" fill="#FF8A80" />
+        """
+    elif "toast" in name_lower or "bread" in name_lower or "sandwich" in name_lower or "bruschetta" in name_lower:
+        # Drawing angled bread toast slices
+        food_graphic = """
+        <rect x="340" y="125" width="80" height="80" rx="12" fill="#8D6E63" stroke="#5D4037" stroke-width="3" transform="rotate(-10, 380, 165)" />
+        <rect x="345" y="130" width="70" height="70" rx="8" fill="#D7CCC8" transform="rotate(-10, 380, 165)" />
+        <rect x="380" y="120" width="80" height="80" rx="12" fill="#8D6E63" stroke="#5D4037" stroke-width="3" transform="rotate(15, 420, 160)" />
+        <rect x="385" y="125" width="70" height="70" rx="8" fill="#F5F5F5" transform="rotate(15, 420, 160)" />
+        <!-- Green garnish on toast -->
+        <path d="M 395,145 Q 420,135 435,160" stroke="#4CAF50" stroke-width="4" fill="none" stroke-linecap="round" />
+        """
+    else:
+        # Standard premium plated cloche conceptual graphic
+        food_graphic = """
+        <path d="M 330,165 C 330,105 470,105 470,165 Z" fill="#ECEFF1" stroke="#B0BEC5" stroke-width="2" />
+        <rect x="320" y="165" width="160" height="8" rx="4" fill="#CFD8DC" />
+        <circle cx="400" cy="100" r="10" fill="#CFD8DC" />
+        """
+
     svg_code = f"""
     <div style="width: 100%; max-width: 1200px; margin: 0 auto 25px auto;">
         <svg viewBox="0 0 800 320" style="width: 100%; height: auto; border-radius: 25px; background: linear-gradient(135deg, #111111 0%, #1c0f05 100%); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 15px 35px rgba(0,0,0,0.6);">
@@ -207,14 +265,11 @@ def render_dish_svg_html(recipe_name, tag, category):
             <circle cx="400" cy="160" r="110" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="6" />
             <circle cx="400" cy="160" r="90" fill="#151515" stroke="#FF5E00" stroke-width="2" stroke-dasharray="5,5" />
             
-            <!-- Food abstraction art -->
-            <circle cx="400" cy="160" r="35" fill="#FF7A00" opacity="0.8" />
-            <polygon points="380,140 430,130 420,180 370,170" fill="#FFE0B2" opacity="0.9" />
-            <path d="M 370,150 Q 400,120 430,170" stroke="#4CAF50" stroke-width="5" fill="none" stroke-linecap="round" />
-            <circle cx="410" cy="140" r="5" fill="#D32F2F" />
+            <!-- Food Specific Graphic Block -->
+            {food_graphic}
             
-            <text x="400" y="240" text-anchor="middle" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="20" font-weight="800" letter-spacing="1">{recipe_name.upper()}</text>
-            <text x="400" y="265" text-anchor="middle" fill="#FF5E00" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="700" letter-spacing="3">{tag.upper()} • {category.upper()}</text>
+            <text x="400" y="245" text-anchor="middle" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="19" font-weight="800" letter-spacing="0.5">{recipe_name.upper()}</text>
+            <text x="400" y="270" text-anchor="middle" fill="#FF5E00" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="700" letter-spacing="3">{tag.upper()} • {category.upper()}</text>
         </svg>
     </div>
     """
@@ -376,62 +431,4 @@ if st.session_state.view == "fridge":
                     st.toast("Using local vision scanner emulation...")
                     sims = ["Garlic", "Spinach", "Paneer"]
                     for s in sims:
-                        if s not in st.session_state.fridge_items: st.session_state.fridge_items.append(s)
-                    st.success("Vision Match Found: Garlic, Spinach, Paneer added!")
-                    time.sleep(1.5)
-                    st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-
-# Fixed missing operator check and missing colon syntax error
-elif st.session_state.view == "swipe":
-    st.markdown("<h1 class='brand-glow'>Swipe Deck 📱</h1>", unsafe_allow_html=True)
-    recipe = st.session_state.deck[st.session_state.deck_idx % len(st.session_state.deck)]
-    
-    # Render safe, error-free vector visual concept directly on the screen
-    st.markdown(render_dish_svg_html(recipe['name'], recipe.get('type', 'Veg'), recipe.get('category', 'Healthy')), unsafe_allow_html=True)
-    
-    c_card, c_act = st.columns([1.6, 1])
-    
-    with c_card:
-        st.markdown(f"""
-        <div class='glass-panel'>
-            <span style='background: rgba(255, 94, 0, 0.15); border: 1px solid #FF5E00; color: #FF9E00; font-weight: 600; display: inline-block; padding: 6px 14px; border-radius: 100px; margin-right: 5px;'>⏱ {recipe['time']}</span>
-            <span style='background: rgba(255, 94, 0, 0.15); border: 1px solid #FF5E00; color: #FF9E00; font-weight: 600; display: inline-block; padding: 6px 14px; border-radius: 100px; margin-right: 5px;'>🔥 {recipe['calories']} kcal</span>
-            <span style='background: rgba(255, 94, 0, 0.15); border: 1px solid #FF5E00; color: #FF9E00; font-weight: 600; display: inline-block; padding: 6px 14px; border-radius: 100px; margin-right: 5px;'>🎯 {recipe['match']}% Match</span>
-            <h1 style="color:white; margin-top:15px; font-size:38px;">{recipe['name']}</h1>
-            <p style="color:#FF9E00; font-weight:600; margin-top:-10px;">{recipe.get('type', 'Veg')} • {recipe.get('category', 'Healthy')}</p>
-            <hr style="border:0.1px solid rgba(255,255,255,0.08); margin: 15px 0;">
-            <p style="color:#DDD; font-size:15px;"><b>Chef's Observation:</b> {recipe['tip']}</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    with c_act:
-        st.markdown("<div class='glass-panel' style='height:100%;'>", unsafe_allow_html=True)
-        st.subheader("Swipe Control Deck")
-        
-        c_no, c_ck, c_yes = st.columns(3)
-        with c_no:
-            if st.button("❌ Next", use_container_width=True):
-                st.session_state.deck_idx += 1
-                st.rerun()
-        with c_ck:
-            if st.button("🍳 Cook", use_container_width=True):
-                st.session_state.active_recipe = recipe
-                st.session_state.view = "cook"
-                st.rerun()
-        with c_yes:
-            if st.button("❤️ Save", use_container_width=True):
-                if recipe['name'] not in st.session_state.favorites:
-                    st.session_state.favorites.append(recipe['name'])
-                    st.session_state.xp += 15
-                    st.toast("Added to favorites! +15 XP")
-                st.session_state.deck_idx += 1
-                st.rerun()
-                
-        st.write("---")
-        st.markdown(f"**Aromatics Involved:** {', '.join(recipe['spices'])}")
-        st.markdown(f"💡 **Substitutes:** {recipe['substitutes']}")
-        
-        st.write("")
-        if st.button("🔙 Back to Fridge", use_container_width=True):
-            st.session_st
+  
