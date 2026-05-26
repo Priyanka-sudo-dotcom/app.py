@@ -13,9 +13,13 @@ st.markdown("""
 
 # --- 2. THE EVOLUTION ENGINE ---
 def call_evolution_ai(prompt):
-    api_key = st.secrets.get("GEMINI_API_KEY")
-    if not api_key: return None
-    genai.configure(api_key=api_key)
+    # Ensure API Key is loaded
+    try:
+        api_key = st.secrets["GEMINI_API_KEY"]
+        genai.configure(api_key=api_key)
+    except Exception:
+        st.error("🔑 GEMINI_API_KEY is missing from Streamlit secrets.")
+        return None
     
     for model_name in ["gemini-1.5-flash", "gemini-1.5-pro"]:
         try:
@@ -29,28 +33,30 @@ def call_evolution_ai(prompt):
             elif "```" in text:
                 text = text.split("```")[1].split("```")[0]
                 
-            return json.loads(text)
-        except:
+            return json.loads(text.strip())
+        except Exception as e:
             continue
     return None
 
 # --- 3. THE INTERFACE ---
-if 'recipe' not in st.session_state: st.session_state.recipe = None
-
 st.markdown("<h1 style='font-size: 50px; font-weight: 800;'>CookSwipe <span style='color:#FF6B00;'>Evolution</span></h1>", unsafe_allow_html=True)
+
 col_in, col_out = st.columns([1, 1.8], gap="large")
 
 with col_in:
-    ingredients = st.text_area("📥 Kitchen Inventory", "Egg, Bread, Cheese", height=100)
-    style = st.select_slider("🎭 Choose Your Style", options=["Desi", "Continental", "Asian Fusion", "Street Style"])
-    mood = st.selectbox("🍳 Cooking Mood", ["Lazy (5 mins)", "Healthy", "Cheat Meal", "Fine Dining"])
+    st.write("#### 📥 Kitchen Inventory")
+    ingredients = st.text_area("What do you have?", "Egg, Bread, Cheese", height=100)
+    
+    st.write("#### 🎭 Choose Your Evolution")
+    style = st.select_slider("Select Style", options=["Desi", "Continental", "Asian Fusion", "Street Style"])
+    mood = st.selectbox("Cooking Mood", ["Lazy (5 mins)", "Healthy", "Cheat Meal", "Fine Dining"])
 
     if st.button("✨ GENERATE MASTERPIECE"):
         if ingredients:
             with st.spinner("🍳 AI is evolving your ingredients..."):
                 prompt = f"""
                 Create a {style} style {mood} recipe using these ingredients: {ingredients}.
-                Return ONLY a JSON object with this exact structure:
+                Return ONLY valid JSON with this structure:
                 {{ "name": "Recipe Name", "time": "20 mins", "calories": "300", "spices": ["spice1", "spice2"], "steps": ["step1", "step2"], "fact": "Chef's tip" }}
                 """
                 result = call_evolution_ai(prompt)
@@ -58,11 +64,14 @@ with col_in:
                     st.session_state.recipe = result
                     st.rerun()
                 else:
-                    st.error("The kitchen is busy. Please check your API key or try again!")
+                    st.error("The kitchen is busy. Please verify your API key and try again.")
 
-with col_out:
-    if st.session_state.recipe:
-        res = st.session_state.recipe
+# --- 4. THE DISPLAY ---
+if 'recipe' in st.session_state and st.session_state.recipe:
+    res = st.session_state.recipe
+    with col_out:
+        st.markdown(f'<img src="https://loremflickr.com/1200/500/cooked,food" style="width:100%; border-radius:40px; margin-bottom:25px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">', unsafe_allow_html=True)
+        
         st.markdown(f"""
         <div class="glass-card">
             <div style="margin-bottom: 25px;">
@@ -71,14 +80,15 @@ with col_out:
                 <span class="stat-pill">🎭 {style}</span>
             </div>
             <h1 style="font-size: 45px; margin-bottom: 15px;">{res['name']}</h1>
+            <hr style="border: 0.1px solid rgba(255,255,255,0.1); margin: 25px 0;">
             <h3 style="color:#FF6B00;">Spice Palette</h3>
-            <p>{", ".join(res['spices'])}</p>
+            <p style="font-size: 18px; margin-bottom:30px;">{", ".join(res['spices'])}</p>
             <h3 style="color:#FF6B00;">Technique</h3>
-            {"".join([f"<p><b>{i+1}.</b> {s}</p>" for i, s in enumerate(res['steps'])])}
-            <div style="background: rgba(255,107,0,0.1); padding: 20px; border-radius: 20px; margin-top: 20px;">
-                <p><b>Chef's Secret:</b> {res['fact']}</p>
+            {"".join([f"<p style='font-size:18px; margin-bottom:14px;'><b style='color:#FF6B00;'>{i+1}.</b> {s}</p>" for i, s in enumerate(res['steps'])])}
+            <div style="background: rgba(255,107,0,0.1); padding: 20px; border-radius: 20px; margin-top: 35px; border-left: 5px solid #FF6B00;">
+                <p style="margin:0; color:#FF6B00; font-weight:bold;">Chef's Secret:</p>
+                <p style="margin:0; color:#ccc;">{res['fact']}</p>
             </div>
         </div>
         """, unsafe_allow_html=True)
-    else:
-        st.info("Your recipe will appear here once generated.")
+        st.balloons()
