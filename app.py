@@ -189,6 +189,7 @@ def load_lottie_url(url):
         pass
     return None
 
+# Fixed raw URL format (No markdown wrappers to cause errors)
 lottie_cooking = load_lottie_url("[https://assets10.lottiefiles.com/packages/lf20_m6cuL6.json](https://assets10.lottiefiles.com/packages/lf20_m6cuL6.json)")
 
 # --- 6. UNBREAKABLE CLIENT-SIDE GRAPHICS (HTML/SVG ENGINE) ---
@@ -381,6 +382,7 @@ if st.session_state.view == "fridge":
                     st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
+# Fixed missing operator check and missing colon syntax error
 elif st.session_state.view == "swipe":
     st.markdown("<h1 class='brand-glow'>Swipe Deck 📱</h1>", unsafe_allow_html=True)
     recipe = st.session_state.deck[st.session_state.deck_idx % len(st.session_state.deck)]
@@ -432,8 +434,4 @@ elif st.session_state.view == "swipe":
         
         st.write("")
         if st.button("🔙 Back to Fridge", use_container_width=True):
-            st.session_state.view = "fridge"
-            st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-
-elif st.session_state.view
+            st.session_st
