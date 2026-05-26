@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 import json
 import google.generativeai as genai
@@ -33,7 +32,8 @@ if 'calories_consumed' not in st.session_state: st.session_state.calories_consum
 with st.sidebar:
     st.markdown("### 🏆 Kitchen Mastery")
     st.write(f"✨ {st.session_state.xp} XP | 🔥 {st.session_state.streak}-Day Streak")
-    st.progress(min(st.session_state.calories_consumed / 2000, 1.0))
+    progress_val = min(st.session_state.calories_consumed / 2000, 1.0)
+    st.progress(progress_val)
     st.write(f"📊 Calories: {st.session_state.calories_consumed} / 2000 kcal")
 
 # --- 4. MAIN INTERFACE ---
@@ -44,8 +44,9 @@ if st.session_state.view == "fridge":
     st.write("#### 🛒 Current Inventory")
     new_item = st.text_input("Add ingredient:")
     if st.button("Add"): 
-        st.session_state.fridge_items.append(new_item)
-        st.rerun()
+        if new_item:
+            st.session_state.fridge_items.append(new_item)
+            st.rerun()
     
     st.write(", ".join(st.session_state.fridge_items))
     
@@ -60,7 +61,6 @@ if st.session_state.view == "fridge":
 
 elif st.session_state.view == "swipe":
     st.write("## Recipe Deck")
-    # Placeholder for logic
     if st.button("🍳 Start Cooking"):
         st.session_state.view = "cook"
         st.rerun()
@@ -70,10 +70,7 @@ elif st.session_state.view == "cook":
     duration = st.number_input("Timer (s)", value=15)
     if st.button("Start Timer"):
         status = st.empty()
-        # Correctly indented timer loop
         for rem in range(duration, -1, -1):
             status.markdown(f"⏳ **{rem} seconds remaining...**")
             time.sleep(1)
         status.success("🔥 Step finished!")
-
-```
