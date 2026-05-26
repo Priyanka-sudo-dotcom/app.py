@@ -1,3 +1,14 @@
+import google.generativeai as genai
+import streamlit as st
+
+# Test the connection
+try:
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    models = genai.list_models()
+    for m in models:
+        st.write(f"Available model: {m.name}")
+except Exception as e:
+    st.error(f"Connection Test Failed: {e}")
 import streamlit as st
 import json
 import google.generativeai as genai
